@@ -1,6 +1,6 @@
 {
   "name": "@scandinavianairlines/vite-plugin-babel",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Runs Babel in Vite during all commands",
   "keywords": [
     "babel",
