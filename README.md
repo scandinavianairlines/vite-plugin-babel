@@ -1,100 +1,61 @@
-# Vite Plugin Babel
+# @scandinavianairlines/vite-plugin-babel
 
-Run Babel during any Vite command, also during serve.
+Run Babel during every Vite command — `serve`, `build`, and dependency optimization.
 
-## Motivations
+> [!NOTE]
+> This is a fork of [`vite-plugin-babel`](https://github.com/owlsdepartment/vite-plugin-babel) by [Miłosz Mandowski](https://github.com/owlsdepartment), rewritten in plain JavaScript for Babel 8 and Vite 8+. All credit for the original idea and implementation goes to its authors. See [Migrating from `vite-plugin-babel`](#migrating-from-vite-plugin-babel) for the differences.
 
-Most Vite plugins runs Babel only during `build`, not `serve`, and only other possible way to do this is via [@vitejs/plugin-react](https://www.npmjs.com/package/@vitejs/plugin-react). ESBuild is awesome tool, but doesn't support some experimental features, like decorators ([issue #2349](https://github.com/vitejs/vite/issues/2349)) or class instance fields, out of box. You can use them in TypeScript, but not pure JS. This plugin was made to enable usage of such features and runs babel during `optimizeDeps`, `dev` and `build` stages, but it can be configured.
+## Requirements
+
+- Node.js 24 or newer
+- `vite` 8 or newer
+- `@babel/core` ^8
 
 ## Installation
 
 ```bash
-# yarn
-yarn add -D vite-plugin-babel
-
-# npm
-npm install -D vite-plugin-babel
+pnpm add -D @scandinavianairlines/vite-plugin-babel @babel/core
 ```
 
 ## Usage
 
-Add it to your Vite config
-
 ```js
+import babel from '@scandinavianairlines/vite-plugin-babel';
 import { defineConfig } from 'vite';
-import babel from 'vite-plugin-babel';
 
 export default defineConfig({
-    plugins: [
-        // Babel will try to pick up Babel config files (.babelrc / .babelrc.* / babel.config.*)
-        babel(),
-        // ...
-    ],
-
-    // ...
-})
-```
-
-## Config
-
-Babel config can be either passed to `babelConfig` field or via Babel config file. For all babel options see: [Babel Options](https://babeljs.io/docs/en/options).
-
-By default, babel is run for JS/JSX files (`include` defaults to `/\.jsx?$/`). To scope it to other files, set `include` / `exclude` and add the matching Babel presets/plugins to `babelConfig` yourself.
-
-> **Migrating from 1.6.x:** in 1.7.0 the default of `include` changed from `undefined` to `/\.jsx?$/`. If you previously relied on `filter` alone to scope files, set `include` explicitly to your desired scope — `filter` is now combined with `include` as an AND, so it can only narrow further, not expand. `filter` is deprecated; prefer `include` / `exclude`.
-
-| Name | Type | Default | Description |
-|---|---|---|---|
-| `apply` | `'serve' \| 'build' \| (config: UserConfig, env: ConfigEnv) => boolean` | `undefined` | Limits plugin usage to only build or only serve. If not specified, will be run during both cycles. Same as [`apply` in Vite Plugins API](https://vite.dev/guide/api-plugin.html#conditional-application) |
-| `enforce` | `'pre' \| 'post'` | `pre` | Force plugin's order execution. More details: [Vite Plugin Ordering](https://vite.dev/guide/api-plugin.html#plugin-ordering) |
-| `babelConfig` | `object` | `{}` | [Babel Transform Options](https://babeljs.io/docs/en/options) |
-| `include` | `string \| RegExp \| Array<string\|RegExp>` | `/\.jsx?$/` | Which files to include. Defaults to `.js` / `.jsx`. Set explicitly to scope to other extensions — the matching Babel presets/plugins are your responsibility. |
-| `exclude` | `string \| RegExp \| Array<string\|RegExp>` | `undefined` | Which files to exclude. Takes priority over `include`. |
-| `filter` | `RegExp \| (id: string) => boolean` | `undefined` | **Deprecated.** Combined with `include` as an AND — can only narrow further, not expand. Prefer `include` / `exclude`. |
-| `loader` | `Loader` or `(path: string) => Loader` | `undefined` | **Vite 7 and lower** This tells esbuild how to interpret the contents after babel's transformation. For example, the js loader interprets the contents as JavaScript and the css loader interprets the contents as CSS. The loader defaults to js if it's not specified. See the [Content Types](https://esbuild.github.io/content-types) page for a complete list of all built-in loaders. |
-| `optimizeOnSSR` | `boolean` | `false` | Run dependency optimization during SSR. Could be useful when running a project on a cloud workers, like `@cloudflare/vite-plugin` |
-
-## Tips
-
-Vite team didn't enable and include Babel by default, because they wanted to keep experience as fast as possible and esbuild can already do a lot of things, you would probably do with Babel. Because of that, we recommend to only include those Babel plugins you really need. You can use option `babelConfig.configFile` and omit Babel config file usage:
-
-```js
-babel({
-    babelConfig: {
-        plugins: ['@babel/plugin-proposal-decorators']
-    }
-})
-```
-
-or just use [Babel config file](https://babeljs.io/docs/config-files).
-
-__NOTE:__ Any babel plugins and presets need to be installed seperately and are not included with this package.
-
-## Troubleshooting
-
-#### [ERROR] The JSX syntax extension is not currently enabled
-
-This usually happens when you're using this plugin to only transform part of a `.jsx` file (such as decorators), and leaving the JSX syntax untouched. By default, esbuild interprets contents as `.js`, so you'll need to specify the loader esbuild should use.
-
-Example:
-
-```js
-import { extname } from 'path';
-// ...
-babel({
-    babelConfig: {
+  plugins: [
+    babel({
+      babelConfig: {
         plugins: ['@babel/plugin-proposal-decorators'],
-
-        // uses the jsx loader for .jsx files
-        loader: path => {
-          if (extname(path) === '.jsx') {
-            return 'jsx';
-          }
-        },
-    }
-})
+      },
+    }),
+  ],
+});
 ```
+
+Project-wide Babel config files (`babel.config.*`) are honored; file-relative `.babelrc` files are not. Babel plugins and presets must be installed separately.
+
+## Options
+
+| Name            | Type                                             | Default          | Description                                                                                                                        |
+| --------------- | ------------------------------------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `apply`         | `'serve' \| 'build' \| (config, env) => boolean` | `undefined`      | Limits the plugin to `serve` or `build`. See [conditional application](https://vite.dev/guide/api-plugin#conditional-application). |
+| `enforce`       | `'pre' \| 'post'`                                | `'pre'`          | Plugin ordering. See [plugin ordering](https://vite.dev/guide/api-plugin#plugin-ordering).                                         |
+| `babelConfig`   | `object`                                         | `{}`             | [Babel options](https://babeljs.io/docs/options).                                                                                  |
+| `include`       | `string \| RegExp \| Array<string \| RegExp>`    | `/\.[cm]?jsx?$/` | Module ids to transform. Add the matching Babel presets for other file types.                                                      |
+| `exclude`       | `string \| RegExp \| Array<string \| RegExp>`    | `undefined`      | Module ids to skip. Takes priority over `include`.                                                                                 |
+| `optimizeOnSSR` | `boolean`                                        | `false`          | Also transform dependencies optimized for SSR.                                                                                     |
+
+`include` and `exclude` are passed to Vite's native [hook filters](https://vite.dev/guide/api-plugin#hook-filters), so non-matching modules never reach the plugin.
+
+## Migrating from `vite-plugin-babel`
+
+- Requires Babel 8 and Vite 8; earlier versions are not supported.
+- `filter` is removed. Use `include` / `exclude`.
+- `loader` is removed. It only applied to esbuild-based dependency optimization (Vite 7 and earlier).
+- The default `include` also matches `.mjs` / `.cjs` files.
 
 ## License
 
-Library is under [MIT License](LICENSE)
+[MIT](LICENSE)
