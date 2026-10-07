@@ -48,8 +48,6 @@ jobs:
           GIT_COMMITTER_NAME: ${{ vars.GANDALF_NAME }}
           GIT_COMMITTER_EMAIL: ${{ vars.GANDALF_EMAIL }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           HUSKY: 0
         run: |
           pnpm --package=@semantic-release/commit-analyzer --package=@semantic-release/release-notes-generator --package=@semantic-release/npm --package=@semantic-release/github --package=@semantic-release/git --package=@semantic-release/changelog --package=semantic-release@${{ env.SEMANTIC_RELEASE_VERSION }} dlx semantic-release
